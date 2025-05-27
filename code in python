@@ -1,0 +1,76 @@
+import math
+
+class MobiusStrip:
+    def __init__(self, R, w, n):
+        self.R = R
+        self.w = w
+        self.n = n
+        self.u_vals = [2 * math.pi * i / n for i in range(n + 1)]
+        self.v_vals = [(-w / 2) + w * j / n for j in range(n + 1)]
+        self.mesh = self.generate_mesh()
+
+    def generate_mesh(self):
+        points = []
+        for u in self.u_vals:
+            u2 = u / 2
+            row = []
+            for v in self.v_vals:
+                x = (self.R + v * math.cos(u2)) * math.cos(u)
+                y = (self.R + v * math.cos(u2)) * math.sin(u)
+                z = v * math.sin(u2)
+                row.append((x, y, z))
+            points.append(row)
+        return points
+
+    def surface_area(self):
+        area = 0.0
+        for i in range(self.n):
+            for j in range(self.n):
+                p1 = self.mesh[i][j]
+                p2 = self.mesh[i+1][j]
+                p3 = self.mesh[i+1][j+1]
+                p4 = self.mesh[i][j+1]
+                area += self.triangle_area(p1, p2, p3)
+                area += self.triangle_area(p1, p3, p4)
+        return area
+
+    def triangle_area(self, a, b, c):
+        def dist(p1, p2):
+            return math.sqrt(sum((p1[i] - p2[i])**2 for i in range(3)))
+        ab = dist(a, b)
+        bc = dist(b, c)
+        ca = dist(c, a)
+        s = (ab + bc + ca) / 2
+        return math.sqrt(max(s * (s - ab) * (s - bc) * (s - ca), 0))
+
+    def edge_length(self):
+        length = 0.0
+        for i in range(self.n):
+            p1 = self.mesh[i][0]
+            p2 = self.mesh[i+1][0]
+            length += math.sqrt(sum((p1[k] - p2[k])**2 for k in range(3)))
+        for i in range(self.n):
+            p1 = self.mesh[self.n - i][self.n]
+            p2 = self.mesh[self.n - i - 1][self.n]
+            length += math.sqrt(sum((p1[k] - p2[k])**2 for k in range(3)))
+        return length
+
+    def get_summary(self):
+        return {
+            "Radius": self.R,
+            "Width": self.w,
+            "Resolution": self.n,
+            "Mesh Size": f"{self.n+1} x {self.n+1}",
+            "Surface Area": round(self.surface_area(), 4),
+            "Edge Length": round(self.edge_length(), 4)
+        }
+
+# Example: user input
+R = float(input("Enter radius R: "))
+w = float(input("Enter width w: "))
+n = int(input("Enter resolution n (e.g., 100): "))
+
+mobius = MobiusStrip(R, w, n)
+print("Mobius Strip Properties:")
+for k, v in mobius.get_summary().items():
+    print(f"{k}: {v}")
